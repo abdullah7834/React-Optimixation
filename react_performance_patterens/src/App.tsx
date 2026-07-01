@@ -1,21 +1,52 @@
-
-
-import './App.css'
-import RenderTrackerDemo from './components/RenderTrackerDemo'
-import SearchBox from './components/SearchBox'
-import TransitionExample from './components/TransitionExample'
+import { useState } from "react";
+import HabitForm from "./components/HabitForm";
+import HabitList, { type Habit } from "./components/HabitList";
+import Header from "./components/Header";
+import { isSameDay } from "date-fns";
+import HabitProvider from "./context/HabitProvider";
 
 function App() {
+  const [habits, setHabits] = useState<Habit[]>([]);
 
+  function addHabit(name: string) {
+    // setHabits([...habits, { id: crypto.randomUUID(), name }]);
+    setHabits((curr) => [
+      ...curr,
+      { id: crypto.randomUUID(), name, completions: [] },
+    ]);
+  }
+  function deleteHabit(id: string) {
+    setHabits((curr) => curr?.filter((h) => h.id != id));
+  }
 
+  function toggleHabit(id: string, date: Date) {
+    setHabits((curr) => {
+      return curr.map((h) => {
+        if (h.id !== id) return h;
+
+        const alreadyDone = h.completions.some((c) => isSameDay(c, date));
+
+        const completions = alreadyDone
+          ? h.completions.filter((c) => !isSameDay(c, date))
+          : [...h.completions, date];
+
+        return { ...h, completions };
+      });
+    });
+  }
   return (
-    <>
-     <h2>Performance Optimization in React</h2>
-  {/* <RenderTrackerDemo />
-  <SearchBox /> */}
-  <TransitionExample />
-    </>
-  )
+    <div className="max-w-2xl mx-auto p-4 flex flex-col gap-4">
+      <HabitProvider>
+        <Header />
+        <HabitForm addHabit={addHabit} />
+        <HabitList
+          habits={habits}
+          deleteHabit={deleteHabit}
+          toggleHabit={toggleHabit}
+        />
+      </HabitProvider>
+    </div>
+  );
 }
 
-export default App
+export default App;
